@@ -1,0 +1,21 @@
+all = { SOI ~ def* ~ EOI }
+
+def = _{workflow_def | action_def}
+
+workflow_def = {"workflow" ~ string ~ def_body}
+action_def = {"action" ~ string ~ def_body}
+
+def_body = _{"{" ~ kvp* ~ "}"}
+
+kvp = {ident ~ "=" ~ value}
+
+value = _{map | array | string}
+
+map = { "{"  ~ map_entry* ~ "}" }
+map_entry = _{ ident ~ "=" ~ string }
+ident = @{ident_char_any ~ (ident_char_any | '0'..'9')*}
+ident_char_any = { 'a'..'z' | 'A'..'Z' | "_" }
+array = { "[]" | "[" ~ string ~ ("," ~ string)* ~ "]" }
+string = @{ "\"" ~ string_char* ~ "\"" }
+string_char = { &!("\"") ~ ANY }
+WHITESPACE = _{ " " | "\n" | "\r" }
