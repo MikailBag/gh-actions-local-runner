@@ -55,7 +55,7 @@ impl Hir {
         &self.workflow
     }
 
-    pub fn actions(&self) -> impl Iterator<Item=&Action> {
+    pub fn actions(&self) -> impl Iterator<Item = &Action> {
         self.actions.iter()
     }
 

@@ -1,4 +1,4 @@
-use crate::hir::{Hir, ActionId};
+use crate::hir::{ActionId, Hir};
 
 #[derive(Copy, Clone)]
 enum Vis {
@@ -69,9 +69,7 @@ impl<'a> Helper<'a> {
     fn run_all(&mut self) {
         for i in 0..self.g.len() {
             match self.vis[i] {
-                Vis::Unvis => {
-                    self.dfs(i)
-                }
+                Vis::Unvis => self.dfs(i),
                 Vis::InProg(_) => unreachable!(),
                 Vis::Done => {}
             }
