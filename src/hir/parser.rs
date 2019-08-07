@@ -1,7 +1,5 @@
 use pest::{iterators::Pair, Parser, Span};
-use std::{
-    collections::{HashMap, HashSet}, process::exit,
-};
+use std::{collections::HashMap, process::exit};
 
 #[derive(Parser)]
 #[grammar = "hir/workflow.pest"]
@@ -43,7 +41,7 @@ fn fail_with_error(p: Span, err: impl std::string::ToString) -> ! {
         p,
     );
     eprintln!("error: {}", err);
-    std::process::exit(1);
+    exit(1);
 }
 
 enum Value {
@@ -63,11 +61,12 @@ impl Value {
 
     fn array_or_split_string(self, p: Span) -> Vec<String> {
         match self {
-            Value::String(s) => {
-                s.split_ascii_whitespace().map(ToOwned::to_owned).collect()
-            }
+            Value::String(s) => s.split_ascii_whitespace().map(ToOwned::to_owned).collect(),
             Value::Array(arr) => arr,
-            Value::Map(_) => fail_with_error(p, "expected array or string with space-separated items, got map"),
+            Value::Map(_) => fail_with_error(
+                p,
+                "expected array or string with space-separated items, got map",
+            ),
         }
     }
 
@@ -82,21 +81,21 @@ impl Value {
     fn string(self, p: Span) -> String {
         match self {
             Value::String(s) => s,
-            _ => fail_with_error(p, format!("expected string, got {}", self.ty()))
+            _ => fail_with_error(p, format!("expected string, got {}", self.ty())),
         }
     }
 
     fn array(self, p: Span) -> Vec<String> {
         match self {
             Value::Array(a) => a,
-            _ => fail_with_error(p, format!("expected array, got {}", self.ty()))
+            _ => fail_with_error(p, format!("expected array, got {}", self.ty())),
         }
     }
 
     fn map(self, p: Span) -> HashMap<String, String> {
         match self {
             Value::Map(m) => m,
-            _ => fail_with_error(p, format!("expected map, got {}", self.ty()))
+            _ => fail_with_error(p, format!("expected map, got {}", self.ty())),
         }
     }
 }
@@ -126,7 +125,10 @@ fn parse_kvp(p: Pair<Rule>) -> KvPair {
             while let Some(ident) = iter.next() {
                 assert_eq!(ident.as_rule(), Rule::ident);
                 let val = iter.next().unwrap();
-                out.insert(ident.as_str().to_string(), trim_str(val.as_str()).to_string());
+                out.insert(
+                    ident.as_str().to_string(),
+                    trim_str(val.as_str()).to_string(),
+                );
             }
             Value::Map(out)
         }
@@ -175,7 +177,10 @@ fn parse_workflow_def(p: Pair<Rule>) -> WorkflowDef {
         name,
 
         on: kvps.remove("on").unwrap().string(span.clone()),
-        resolves: kvps.remove("resolves").unwrap().array_or_from_string(span.clone()),
+        resolves: kvps
+            .remove("resolves")
+            .unwrap()
+            .array_or_from_string(span.clone()),
     };
     check_kvps_empty(span, &kvps);
     out
@@ -189,11 +194,24 @@ fn parse_action_def(p: Pair<Rule>) -> ActionDef {
         name,
 
         uses: kvps.remove("uses").unwrap().string(span.clone()),
-        needs: kvps.remove("needs").map(|x| x.array_or_from_string(span.clone())).unwrap_or_default(),
-        runs: kvps.remove("runs").map(|x| x.array_or_split_string(span.clone())),
-        args: kvps.remove("args").map(|x| x.array_or_split_string(span.clone())),
-        env: kvps.remove("env").map(|x| x.map(span.clone())).unwrap_or_default(),
-        secrets: kvps.remove("secrets").map(|x| x.array(span.clone())).unwrap_or_default(),
+        needs: kvps
+            .remove("needs")
+            .map(|x| x.array_or_from_string(span.clone()))
+            .unwrap_or_default(),
+        runs: kvps
+            .remove("runs")
+            .map(|x| x.array_or_split_string(span.clone())),
+        args: kvps
+            .remove("args")
+            .map(|x| x.array_or_split_string(span.clone())),
+        env: kvps
+            .remove("env")
+            .map(|x| x.map(span.clone()))
+            .unwrap_or_default(),
+        secrets: kvps
+            .remove("secrets")
+            .map(|x| x.array(span.clone()))
+            .unwrap_or_default(),
     };
 
     check_kvps_empty(span, &kvps);
@@ -202,8 +220,8 @@ fn parse_action_def(p: Pair<Rule>) -> ActionDef {
 
 fn parse_def(p: Pair<Rule>) -> Def {
     match p.as_rule() {
-        Rule::workflow_def => Def::Workflow(dbg!(parse_workflow_def(p))),
-        Rule::action_def => Def::Action(dbg!(parse_action_def(p))),
+        Rule::workflow_def => Def::Workflow(parse_workflow_def(p)),
+        Rule::action_def => Def::Action(parse_action_def(p)),
         _ => unreachable!(),
     }
 }
