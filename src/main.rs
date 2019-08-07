@@ -5,7 +5,10 @@ mod execute;
 mod hir;
 mod scheduler;
 
-use std::{path::{PathBuf, Path}, process::exit};
+use std::{
+    path::{Path, PathBuf},
+    process::exit,
+};
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
@@ -29,6 +32,10 @@ fn deep_copy_with_ignore(src: &Path, dest: &Path) {
         let path = item.path();
         let rel_path = path.strip_prefix(src).expect("failed strip src path");
         let dest_path = dest.join(rel_path);
+        std::fs::create_dir_all(dest_path.parent().unwrap()).expect("failed prepare dir for copy dest");
+        std::fs::copy(path, &dest_path).unwrap_or_else(|err| {
+            panic!("failed copy {} to {}: {}", path.display(), dest_path.display(), err)
+        });
     }
 }
 

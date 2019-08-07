@@ -36,7 +36,7 @@ pub fn get_git_info(dir: &Path) -> GitInfo {
         eprintln!("git didn't exit successfully");
         exit(1);
     }
-    let commit = String::from_utf8(output.stdout).expect("strange git output");
+    let commit = String::from_utf8(output.stdout).expect("strange git output").trim().to_string();
     GitInfo { commit }
 }
 
@@ -69,6 +69,12 @@ pub fn execute(h: &Hir, act: ActionId, opts: &ExecOptions) {
     }
     cmdline.push("--workdir".to_string());
     cmdline.push("/github/workspace".to_string());
+
+    cmdline.push("--volume".to_string());
+    cmdline.push(format!("{}:/github/workspace", &opts.workspace_dir));
+
+    cmdline.push("--volume".to_string());
+    cmdline.push(format!("{}:/github/home", &opts.home_dir));
 
     let add_args;
     match &act.runs {
